@@ -27,16 +27,29 @@ export default function AdminOrdersPage() {
     },
   })
 
+  const [alertError, setAlertError] = useState('')
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }) =>
       (await api.patch(`/admin/orders/${id}/status`, { status })).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-orders'] }),
+    onSuccess: () => {
+      setAlertError('')
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
+    },
+    onError: (err) => {
+      setAlertError(
+        err.response?.data?.message || 'Gagal mengubah status. Pastikan kurir sudah dipilih.'
+      )
+    },
   })
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ id, status }) =>
       (await api.patch(`/admin/orders/${id}/payment`, { status })).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-orders'] }),
+    onSuccess: () => {
+      setAlertError('')
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
+    },
   })
 
   const { data: couriers = [] } = useQuery({
@@ -47,7 +60,10 @@ export default function AdminOrdersPage() {
   const assignCourierMutation = useMutation({
     mutationFn: async ({ id, courier_id }) =>
       (await api.patch(`/admin/orders/${id}/courier`, { courier_id: courier_id || null })).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-orders'] }),
+    onSuccess: () => {
+      setAlertError('')
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
+    },
   })
 
   const orders = data?.orders || []
@@ -93,6 +109,22 @@ export default function AdminOrdersPage() {
             <p className="text-2xl font-extrabold text-[#10B981] mt-1">{kpi.siap_diantar}</p>
           </div>
         </div>
+
+        {/* Alert Error Kurir */}
+        {alertError && (
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-3 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <span className="text-base">⚠️</span>
+              <span>{alertError}</span>
+            </div>
+            <button
+              onClick={() => setAlertError('')}
+              className="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-1 rounded"
+            >
+              Tutup
+            </button>
+          </div>
+        )}
 
         {/* Filter & Search Bar */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row gap-3 justify-between">
@@ -201,23 +233,34 @@ export default function AdminOrdersPage() {
                               {ORDER_TYPE_LABELS[order.order_type] || order.order_type}
                             </StatusPill>
                             {order.order_type !== 'walk_in' && (
-                              <select
-                                value={order.courier_id || ''}
-                                onChange={(e) =>
-                                  assignCourierMutation.mutate({
-                                    id: order.id,
-                                    courier_id: e.target.value ? Number(e.target.value) : null,
-                                  })
-                                }
-                                className="block w-full max-w-[160px] h-7 px-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-700"
-                              >
-                                <option value="">Belum ada kurir</option>
-                                {couriers.map((k) => (
-                                  <option key={k.id} value={k.id}>
-                                    {k.name}
-                                  </option>
-                                ))}
-                              </select>
+                              <div className="space-y-1">
+                                <select
+                                  value={order.courier_id || ''}
+                                  onChange={(e) =>
+                                    assignCourierMutation.mutate({
+                                      id: order.id,
+                                      courier_id: e.target.value ? Number(e.target.value) : null,
+                                    })
+                                  }
+                                  className={`block w-full max-w-[170px] h-7 px-2 rounded-md border text-[11px] font-semibold transition ${
+                                    !order.courier_id
+                                      ? 'border-rose-400 bg-rose-50 text-rose-700 animate-pulse'
+                                      : 'border-slate-200 bg-white text-slate-700'
+                                  }`}
+                                >
+                                  <option value="">⚠️ Pilih Kurir Pengantar</option>
+                                  {couriers.map((k) => (
+                                    <option key={k.id} value={k.id}>
+                                      {k.name} ({k.phone})
+                                    </option>
+                                  ))}
+                                </select>
+                                {!order.courier_id && (
+                                  <span className="text-[10px] text-rose-600 font-bold block">
+                                    ⚠️ Wajib ada kurir pengantar!
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </td>
@@ -255,15 +298,44 @@ export default function AdminOrdersPage() {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           {nextStatus ? (
-                            <button
-                              onClick={() =>
-                                updateStatusMutation.mutate({ id: order.id, status: nextStatus })
+                            (() => {
+                              const isCourierMissing =
+                                order.order_type !== 'walk_in' &&
+                                !order.courier_id &&
+                                ['dijemput', 'siap_diantar', 'selesai'].includes(nextStatus)
+
+                              if (isCourierMissing) {
+                                return (
+                                  <button
+                                    onClick={() =>
+                                      setAlertError(
+                                        `Pesanan ${order.invoice_code} membutuhkan kurir (${ORDER_TYPE_LABELS[order.order_type]}). Harap pilih dan tugaskan kurir terlebih dahulu sebelum lanjut ke status ${ORDER_STATUS_META[nextStatus]?.label}!`
+                                      )
+                                    }
+                                    title="Pilih kurir pengantar terlebih dahulu!"
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-colors"
+                                  >
+                                    <span>⚠️ Pilih Kurir</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </button>
+                                )
                               }
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-50 text-[#0284C7] hover:bg-[#0284C7] hover:text-white text-xs font-semibold transition-colors"
-                            >
-                              {ORDER_STATUS_META[nextStatus]?.label}
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </button>
+
+                              return (
+                                <button
+                                  onClick={() =>
+                                    updateStatusMutation.mutate({
+                                      id: order.id,
+                                      status: nextStatus,
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-sky-50 text-[#0284C7] hover:bg-[#0284C7] hover:text-white text-xs font-semibold transition-colors"
+                                >
+                                  {ORDER_STATUS_META[nextStatus]?.label}
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </button>
+                              )
+                            })()
                           ) : (
                             <span className="text-xs font-semibold text-emerald-600">Tuntas</span>
                           )}

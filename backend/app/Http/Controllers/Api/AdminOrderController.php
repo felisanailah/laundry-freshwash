@@ -58,6 +58,13 @@ class AdminOrderController extends Controller
             'items.*.quantity' => ['required', 'numeric', 'min:0.1'],
         ]);
 
+        // Validasi: Jika order membutuhkan kurir, kurir wajib ditentukan di kasir
+        if ($data['order_type'] !== 'walk_in' && empty($data['courier_id'])) {
+            return response()->json([
+                'message' => 'Pesanan dengan pengantaran atau penjemputan kurir wajib memilih kurir yang bertugas!',
+            ], 422);
+        }
+
         $order = OrderBuilder::createOrder($data);
 
         return response()->json($order, 201);
@@ -69,9 +76,19 @@ class AdminOrderController extends Controller
             'status' => ['required', 'in:dijemput,dicuci,disetrika,siap_diantar,selesai'],
         ]);
 
+        // Validasi kurir: Jika pesanan butuh kurir tapi belum ada kurir yang ditugaskan,
+        // dilarang mengubah status ke dijemput, siap_diantar, atau selesai!
+        if ($order->order_type !== 'walk_in' && !$order->courier_id) {
+            if (in_array($data['status'], ['dijemput', 'siap_diantar', 'selesai'])) {
+                return response()->json([
+                    'message' => 'Pesanan ini membutuhkan kurir. Harap pilih dan tugaskan kurir terlebih dahulu sebelum memproses pengantaran/penjemputan atau menyelesaikan pesanan!',
+                ], 422);
+            }
+        }
+
         $order->update(['status' => $data['status']]);
 
-        return response()->json($order->fresh(['customer', 'items.service', 'payment']));
+        return response()->json($order->fresh(['customer', 'items.service', 'payment', 'courier']));
     }
 
     public function updatePayment(Request $request, Order $order)

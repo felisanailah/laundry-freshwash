@@ -227,6 +227,9 @@ export default function PosPage() {
       setDpAmount('')
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
     },
+    onError: (err) => {
+      alert(err.response?.data?.message || 'Gagal menyimpan pesanan.')
+    },
   })
 
   // Filtered orders for tracking tab in kasir
@@ -462,21 +465,30 @@ Terima kasih atas kepercayaannya! 🙏`
                 {/* Courier selection if not walk_in */}
                 {orderType !== 'walk_in' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Pilih Kurir Pengantar
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Pilih Kurir Bertugas <span className="text-rose-500">* (Wajib Dipilih)</span>
                     </label>
                     <select
                       value={courierId}
                       onChange={(e) => setCourierId(e.target.value)}
-                      className="w-full h-9 px-3 rounded-xl border border-sky-300 text-xs font-semibold text-slate-700 bg-sky-50"
+                      className={`w-full h-9 px-3 rounded-xl border text-xs font-semibold transition ${
+                        !courierId
+                          ? 'border-rose-400 bg-rose-50 text-rose-800 ring-2 ring-rose-200'
+                          : 'border-sky-300 bg-sky-50 text-slate-700'
+                      }`}
                     >
-                      <option value="">-- Pilih Kurir Bertugas --</option>
+                      <option value="">-- Wajib Pilih Kurir Pengantar --</option>
                       {couriers.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.name} ({c.phone})
                         </option>
                       ))}
                     </select>
+                    {!courierId && (
+                      <p className="text-[11px] text-rose-600 font-bold mt-1 flex items-center gap-1">
+                        <span>⚠️</span> Layanan pengantaran/penjemputan wajib memilih kurir yang bertugas!
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -696,9 +708,20 @@ Terima kasih atas kepercayaannya! 🙏`
                   </div>
                 )}
 
+                {orderType !== 'walk_in' && !courierId && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-bold text-center">
+                    ⚠️ Harap pilih kurir pengantar di atas sebelum menyimpan transaksi!
+                  </div>
+                )}
+
                 <button
                   type="button"
-                  disabled={!customerId || cart.length === 0 || saveOrderMutation.isPending}
+                  disabled={
+                    !customerId ||
+                    cart.length === 0 ||
+                    (orderType !== 'walk_in' && !courierId) ||
+                    saveOrderMutation.isPending
+                  }
                   onClick={() => saveOrderMutation.mutate()}
                   className="w-full h-11 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
                 >
