@@ -31,7 +31,11 @@ export default function LoginPage() {
         navigate('/')
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Email atau password tidak valid.')
+      if (!err.response) {
+        setError('Tidak dapat terhubung ke server backend atau database. Pastikan Laragon aktif.')
+      } else {
+        setError(err.response?.data?.message || 'Email atau password tidak valid.')
+      }
     } finally {
       setLoading(false)
     }
@@ -48,7 +52,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">Masuk ke FreshWash</h1>
-              <p className="text-xs text-slate-500">Akses dashboard Kasir, Kurir, dan Owner</p>
+              <p className="text-xs text-slate-500">Akses dashboard Kasir dan Owner</p>
             </div>
           </div>
 
