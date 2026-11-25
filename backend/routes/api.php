@@ -3,12 +3,14 @@
 use App\Http\Controllers\Api\AdminOrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OwnerController;
+use App\Http\Controllers\Api\PromoController;
 use App\Http\Controllers\Api\PublicController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public & Customer routes
 Route::get('/services', [PublicController::class, 'services']);
+Route::get('/promos/active', [PromoController::class, 'active']);
 Route::get('/promos/validate', [PublicController::class, 'validatePromo']);
 Route::get('/orders/track/{invoiceCode}', [PublicController::class, 'trackOrder']);
 Route::post('/orders', [PublicController::class, 'storeOrder']);
@@ -30,7 +32,7 @@ Route::prefix('admin')->group(function () {
     Route::patch('/orders/{order}/courier', [AdminOrderController::class, 'assignCourier']);
 });
 
-// Owner Analytics, Inventory & User Management routes
+// Owner Analytics, Inventory, User & Promo Management routes
 Route::prefix('owner')->group(function () {
     Route::get('/analytics', [OwnerController::class, 'analytics']);
     Route::get('/inventory', [OwnerController::class, 'inventory']);
@@ -39,4 +41,8 @@ Route::prefix('owner')->group(function () {
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    Route::get('/promos', [PromoController::class, 'index']);
+    Route::post('/promos', [PromoController::class, 'store']);
+    Route::patch('/promos/{promo}/toggle', [PromoController::class, 'toggle']);
+    Route::delete('/promos/{promo}', [PromoController::class, 'destroy']);
 });

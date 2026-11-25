@@ -7,6 +7,17 @@ import PosPage from './pages/PosPage'
 import AdminOrdersPage from './pages/AdminOrdersPage'
 import OwnerDashboardPage from './pages/OwnerDashboardPage'
 import ManageUsersPage from './pages/ManageUsersPage'
+import ManagePromosPage from './pages/ManagePromosPage'
+import { getStoredUser } from './lib/api'
+
+// Guard: Khusus Owner (Kasir dilarang dan otomatis dialihkan ke /admin/pos)
+function OwnerRoute({ children }) {
+  const user = getStoredUser()
+  if (user?.role === 'kasir') {
+    return <Navigate to="/admin/pos" replace />
+  }
+  return children
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,9 +37,38 @@ export default function App() {
           <Route path="/order" element={<OrderPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin/pos" element={<PosPage />} />
-          <Route path="/admin/orders" element={<AdminOrdersPage />} />
-          <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
-          <Route path="/owner/users" element={<ManageUsersPage />} />
+          <Route
+            path="/admin/orders"
+            element={
+              <OwnerRoute>
+                <AdminOrdersPage />
+              </OwnerRoute>
+            }
+          />
+          <Route
+            path="/owner/dashboard"
+            element={
+              <OwnerRoute>
+                <OwnerDashboardPage />
+              </OwnerRoute>
+            }
+          />
+          <Route
+            path="/owner/promos"
+            element={
+              <OwnerRoute>
+                <ManagePromosPage />
+              </OwnerRoute>
+            }
+          />
+          <Route
+            path="/owner/users"
+            element={
+              <OwnerRoute>
+                <ManageUsersPage />
+              </OwnerRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

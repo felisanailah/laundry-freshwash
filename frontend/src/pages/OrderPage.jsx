@@ -50,6 +50,11 @@ export default function OrderPage() {
     },
   })
 
+  const { data: activePromos = [] } = useQuery({
+    queryKey: ['active-promos'],
+    queryFn: async () => (await api.get('/promos/active')).data,
+  })
+
   useEffect(() => {
     if (initialServiceId && services.length > 0 && Object.keys(quantities).length === 0) {
       const target = services.find((s) => s.id === initialServiceId)
@@ -417,30 +422,76 @@ export default function OrderPage() {
 
             {/* Promo Code */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Kode Promo (Coba: HEMAT20)
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Kode Promo / Voucher Diskon
+                </label>
+                {activePromos.length > 0 && (
+                  <span className="text-[11px] text-[#0284C7] font-semibold">
+                    {activePromos.length} voucher aktif
+                  </span>
+                )}
+              </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={promoInput}
-                  onChange={(e) => setPromoInput(e.target.value)}
-                  placeholder="Masukkan kode promo"
-                  className="flex-1 h-10 px-3 rounded-lg border border-slate-200 text-sm uppercase focus:outline-none focus:border-[#0284C7]"
+                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                  placeholder="Masukkan kode promo (contoh: HEMAT20)"
+                  className="flex-1 h-10 px-3 rounded-lg border border-slate-200 text-sm font-mono font-bold uppercase focus:outline-none focus:border-[#0284C7]"
                 />
                 <button
                   type="button"
                   onClick={handleApplyPromo}
-                  className="px-4 h-10 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  className="px-4 h-10 rounded-lg bg-[#0284C7] hover:bg-[#0369A1] text-xs font-bold text-white transition"
                 >
-                  Apply
+                  Pakai
                 </button>
               </div>
+
+              {/* Rekomendasi Promo Aktif dari Owner */}
+              {activePromos.length > 0 && (
+                <div className="mt-2.5 space-y-1.5">
+                  <p className="text-[11px] text-slate-500 font-medium">Klik voucher untuk langsung gunakan:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {activePromos.map((p) => {
+                      const isSelected = appliedPromo?.code === p.code
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setPromoInput(p.code)
+                            setAppliedPromo(p)
+                            setPromoError('')
+                          }}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border transition ${
+                            isSelected
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-400'
+                              : 'bg-sky-50 text-[#0284C7] border-sky-200 hover:bg-sky-100'
+                          }`}
+                        >
+                          <Tag className="w-3 h-3" />
+                          <span className="font-mono">{p.code}</span>
+                          <span className="text-[10px] opacity-80">
+                            ({p.discount_type === 'percent' ? `${p.discount_value}%` : formatRupiah(p.discount_value)})
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {appliedPromo && (
-                <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                  <Tag className="w-3.5 h-3.5" />
-                  {appliedPromo.code} — Diskon {appliedPromo.discount_value}
-                  {appliedPromo.discount_type === 'percent' ? '%' : ''}
+                <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>
+                    Kupon <strong>{appliedPromo.code}</strong> aktif: Diskon{' '}
+                    {appliedPromo.discount_type === 'percent'
+                      ? `${appliedPromo.discount_value}%`
+                      : formatRupiah(appliedPromo.discount_value)}
+                  </span>
                 </div>
               )}
               {promoError && <p className="text-xs text-red-600 mt-1">{promoError}</p>}

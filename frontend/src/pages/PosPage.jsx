@@ -57,6 +57,11 @@ export default function PosPage() {
     queryFn: async () => (await api.get('/admin/couriers')).data,
   })
 
+  const { data: activePromos = [] } = useQuery({
+    queryKey: ['active-promos'],
+    queryFn: async () => (await api.get('/promos/active')).data,
+  })
+
   const filteredServices = useMemo(() => {
     return services.filter((s) => {
       const matchCat = category === 'all' || s.category === category
@@ -92,24 +97,38 @@ export default function PosPage() {
     setCart((prev) => prev.filter((item) => item.service.id !== serviceId))
   }
 
+  const [appliedPromoObj, setAppliedPromoObj] = useState(null)
+
   const subtotal = useMemo(
     () =>
       cart.reduce((acc, item) => acc + Math.round(Number(item.service.price) * Number(item.quantity || 0)), 0),
     [cart]
   )
-  const discount = Math.round((subtotal * discountPercent) / 100)
+
+  const discount = useMemo(() => {
+    if (!appliedPromoObj || subtotal <= 0) return 0
+    if (appliedPromoObj.discount_type === 'percent') {
+      return Math.round((subtotal * Number(appliedPromoObj.discount_value)) / 100)
+    }
+    return Math.min(subtotal, Number(appliedPromoObj.discount_value))
+  }, [appliedPromoObj, subtotal])
+
   const grandTotal = Math.max(0, subtotal - discount)
 
-  const applyPromo = async () => {
-    if (!promoCode.trim()) return
+  const applyPromo = async (codeToApply) => {
+    const code = (codeToApply || promoCode).trim().toUpperCase()
+    if (!code) return
     try {
       const { data } = await api.get('/promos/validate', {
-        params: { code: promoCode.trim().toUpperCase() },
+        params: { code },
       })
+      setAppliedPromoObj(data)
+      setPromoCode(data.code)
       if (data.discount_type === 'percent') {
         setDiscountPercent(Number(data.discount_value))
       }
     } catch {
+      setAppliedPromoObj(null)
       setDiscountPercent(0)
     }
   }
@@ -372,30 +391,53 @@ export default function PosPage() {
             </div>
 
             {/* Promo & Notes */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex gap-1">
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Kode Promo (HEMAT20)"
+                    className="w-full h-9 px-2.5 rounded-lg border border-slate-200 text-xs font-mono font-bold uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => applyPromo()}
+                    className="px-2.5 h-9 rounded-lg bg-[#0284C7] text-white text-xs font-semibold hover:bg-[#0369A1]"
+                  >
+                    Pakai
+                  </button>
+                </div>
                 <input
                   type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  placeholder="Promo (HEMAT20)"
-                  className="w-full h-9 px-2.5 rounded-lg border border-slate-200 text-xs uppercase"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Catatan nota..."
+                  className="w-full h-9 px-2.5 rounded-lg border border-slate-200 text-xs"
                 />
-                <button
-                  type="button"
-                  onClick={applyPromo}
-                  className="px-2.5 h-9 rounded-lg border border-slate-200 text-xs font-semibold hover:bg-slate-50"
-                >
-                  OK
-                </button>
               </div>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Catatan nota..."
-                className="w-full h-9 px-2.5 rounded-lg border border-slate-200 text-xs"
-              />
+
+              {/* Promo aktif dari owner */}
+              {activePromos.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-slate-400">Voucher Owner:</span>
+                  {activePromos.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => applyPromo(p.code)}
+                      className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded border transition ${
+                        appliedPromoObj?.code === p.code
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-sky-50 hover:text-sky-700'
+                      }`}
+                    >
+                      {p.code} ({p.discount_type === 'percent' ? `${p.discount_value}%` : formatRupiah(p.discount_value)})
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -408,7 +450,9 @@ export default function PosPage() {
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-emerald-600 font-semibold">
-                  <span>Diskon ({discountPercent}%)</span>
+                  <span>
+                    Diskon Promo ({appliedPromoObj?.code || 'Kupon'})
+                  </span>
                   <span>-{formatRupiah(discount)}</span>
                 </div>
               )}

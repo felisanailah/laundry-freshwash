@@ -39,12 +39,30 @@ export default function Navbar() {
           <Link to="/order" className={navLinkClass(location.pathname === '/order')}>
             Pesan Online
           </Link>
-          <Link to="/admin/pos" className={navLinkClass(location.pathname.startsWith('/admin'))}>
-            Kasir &amp; Operasional
-          </Link>
-          <Link to="/owner/dashboard" className={navLinkClass(location.pathname.startsWith('/owner'))}>
-            Owner Analytics
-          </Link>
+
+          {/* Menu berdasarkan role login */}
+          {user?.role === 'kasir' && (
+            <Link to="/admin/pos" className={navLinkClass(location.pathname.startsWith('/admin'))}>
+              Kasir &amp; Pengantaran
+            </Link>
+          )}
+
+          {user?.role === 'owner' && (
+            <>
+              <Link to="/admin/pos" className={navLinkClass(location.pathname.startsWith('/admin'))}>
+                Kasir (POS)
+              </Link>
+              <Link to="/owner/dashboard" className={navLinkClass(location.pathname.startsWith('/owner'))}>
+                Owner Analytics
+              </Link>
+            </>
+          )}
+
+          {!user && (
+            <Link to="/login" className={navLinkClass(location.pathname === '/login')}>
+              Kasir &amp; Owner
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
