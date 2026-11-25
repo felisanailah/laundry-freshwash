@@ -39,6 +39,17 @@ export default function AdminOrdersPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-orders'] }),
   })
 
+  const { data: couriers = [] } = useQuery({
+    queryKey: ['admin-couriers'],
+    queryFn: async () => (await api.get('/admin/couriers')).data,
+  })
+
+  const assignCourierMutation = useMutation({
+    mutationFn: async ({ id, courier_id }) =>
+      (await api.patch(`/admin/orders/${id}/courier`, { courier_id: courier_id || null })).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-orders'] }),
+  })
+
   const orders = data?.orders || []
   const kpi = data?.kpi || { dijemput: 0, dicuci: 0, disetrika: 0, siap_diantar: 0 }
 
@@ -127,7 +138,7 @@ export default function AdminOrdersPage() {
                   <th className="py-3.5 px-4">Invoice &amp; Waktu</th>
                   <th className="py-3.5 px-4">Pelanggan</th>
                   <th className="py-3.5 px-4">Layanan &amp; Total</th>
-                  <th className="py-3.5 px-4">Tipe</th>
+                  <th className="py-3.5 px-4">Tipe &amp; Kurir</th>
                   <th className="py-3.5 px-4">Status Pengerjaan</th>
                   <th className="py-3.5 px-4">Pembayaran</th>
                   <th className="py-3.5 px-4 text-right">Aksi Cepat</th>
@@ -185,9 +196,30 @@ export default function AdminOrdersPage() {
                           </p>
                         </td>
                         <td className="py-3.5 px-4">
-                          <StatusPill tone={order.order_type === 'walk_in' ? 'neutral' : 'info'}>
-                            {ORDER_TYPE_LABELS[order.order_type] || order.order_type}
-                          </StatusPill>
+                          <div className="space-y-1.5">
+                            <StatusPill tone={order.order_type === 'walk_in' ? 'neutral' : 'info'}>
+                              {ORDER_TYPE_LABELS[order.order_type] || order.order_type}
+                            </StatusPill>
+                            {order.order_type !== 'walk_in' && (
+                              <select
+                                value={order.courier_id || ''}
+                                onChange={(e) =>
+                                  assignCourierMutation.mutate({
+                                    id: order.id,
+                                    courier_id: e.target.value ? Number(e.target.value) : null,
+                                  })
+                                }
+                                className="block w-full max-w-[160px] h-7 px-2 rounded-md border border-slate-200 bg-white text-[11px] font-medium text-slate-700"
+                              >
+                                <option value="">Belum ada kurir</option>
+                                {couriers.map((k) => (
+                                  <option key={k.id} value={k.id}>
+                                    {k.name}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3.5 px-4">
                           <StatusPill tone={statusMeta.tone} dot>

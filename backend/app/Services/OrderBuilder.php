@@ -61,6 +61,7 @@ class OrderBuilder
                 'invoice_code' => $invoiceCode,
                 'branch_id' => $params['branch_id'] ?? 1,
                 'customer_id' => $params['customer_id'],
+                'courier_id' => $params['courier_id'] ?? null,
                 'order_type' => $orderType,
                 'pickup_schedule' => $params['pickup_schedule'] ?? null,
                 'pickup_address' => $params['pickup_address'] ?? null,

@@ -28,6 +28,7 @@ export default function PosPage() {
   const [category, setCategory] = useState('all')
   const [orderType, setOrderType] = useState('walk_in')
   const [customerId, setCustomerId] = useState('')
+  const [courierId, setCourierId] = useState('')
   const [cart, setCart] = useState([])
   const [promoCode, setPromoCode] = useState('')
   const [discountPercent, setDiscountPercent] = useState(0)
@@ -49,6 +50,11 @@ export default function PosPage() {
   const { data: customers = [] } = useQuery({
     queryKey: ['admin-customers'],
     queryFn: async () => (await api.get('/admin/customers')).data,
+  })
+
+  const { data: couriers = [] } = useQuery({
+    queryKey: ['admin-couriers'],
+    queryFn: async () => (await api.get('/admin/couriers')).data,
   })
 
   const filteredServices = useMemo(() => {
@@ -123,6 +129,7 @@ export default function PosPage() {
     mutationFn: async () => {
       const payload = {
         customer_id: Number(customerId),
+        courier_id: orderType !== 'walk_in' && courierId ? Number(courierId) : null,
         order_type: orderType,
         notes,
         promo_code: promoCode.trim() ? promoCode.trim().toUpperCase() : null,
@@ -277,6 +284,26 @@ export default function PosPage() {
                   </option>
                 ))}
               </select>
+
+              {orderType !== 'walk_in' && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Tugaskan Kurir
+                  </label>
+                  <select
+                    value={courierId}
+                    onChange={(e) => setCourierId(e.target.value)}
+                    className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-[#0284C7]"
+                  >
+                    <option value="">-- Pilih Kurir (Opsional) --</option>
+                    {couriers.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.name} ({k.phone})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {showNewCustomer && (
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">

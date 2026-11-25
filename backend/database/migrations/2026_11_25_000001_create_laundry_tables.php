@@ -51,12 +51,21 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('couriers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete();
+            $table->string('name');
+            $table->string('phone');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_code')->unique();
             $table->foreignId('branch_id')->nullable()->constrained('branches')->nullOnDelete();
             $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
-            $table->foreignId('courier_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('courier_id')->nullable()->constrained('couriers')->nullOnDelete();
             $table->string('order_type')->default('walk_in'); // pickup_delivery, walk_in
             $table->dateTime('pickup_schedule')->nullable();
             $table->text('pickup_address')->nullable();
@@ -108,6 +117,7 @@ return new class extends Migration
         Schema::dropIfExists('payments');
         Schema::dropIfExists('order_items');
         Schema::dropIfExists('orders');
+        Schema::dropIfExists('couriers');
         Schema::dropIfExists('promos');
         Schema::dropIfExists('services');
         Schema::dropIfExists('customers');

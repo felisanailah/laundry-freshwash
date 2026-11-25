@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Courier;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Services\OrderBuilder;
@@ -45,6 +46,7 @@ class AdminOrderController extends Controller
     {
         $data = $request->validate([
             'customer_id' => ['required', 'integer', 'exists:customers,id'],
+            'courier_id' => ['nullable', 'integer', 'exists:couriers,id'],
             'order_type' => ['required', 'in:pickup_delivery,pickup_only,delivery_only,walk_in'],
             'notes' => ['nullable', 'string'],
             'promo_code' => ['nullable', 'string'],
@@ -128,5 +130,21 @@ class AdminOrderController extends Controller
         $customer = Customer::create($data);
 
         return response()->json($customer, 201);
+    }
+
+    public function couriers()
+    {
+        return response()->json(Courier::where('is_active', true)->orderBy('name')->get());
+    }
+
+    public function assignCourier(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'courier_id' => ['nullable', 'integer', 'exists:couriers,id'],
+        ]);
+
+        $order->update(['courier_id' => $data['courier_id']]);
+
+        return response()->json($order->fresh(['courier']));
     }
 }

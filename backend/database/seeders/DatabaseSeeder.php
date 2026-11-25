@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Branch;
+use App\Models\Courier;
 use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\Order;
@@ -46,12 +47,18 @@ class DatabaseSeeder extends Seeder
             'branch_id' => $senopati->id,
         ]);
 
-        $kurir = User::create([
-            'name' => 'Budi Santoso',
-            'email' => 'kurir@freshwash.id',
-            'password' => Hash::make('password'),
-            'role' => 'kurir',
+        $kurir = Courier::create([
             'branch_id' => $senopati->id,
+            'name' => 'Budi Santoso',
+            'phone' => '081211112222',
+            'is_active' => true,
+        ]);
+
+        Courier::create([
+            'branch_id' => $senopati->id,
+            'name' => 'Andi Wijaya',
+            'phone' => '081233334444',
+            'is_active' => true,
         ]);
 
         $s1 = Service::create([

@@ -25,6 +25,8 @@ Route::prefix('admin')->group(function () {
     Route::patch('/orders/{order}/payment', [AdminOrderController::class, 'updatePayment']);
     Route::get('/customers', [AdminOrderController::class, 'customers']);
     Route::post('/customers', [AdminOrderController::class, 'storeCustomer']);
+    Route::get('/couriers', [AdminOrderController::class, 'couriers']);
+    Route::patch('/orders/{order}/courier', [AdminOrderController::class, 'assignCourier']);
 });
 
 // Owner Analytics & Inventory routes

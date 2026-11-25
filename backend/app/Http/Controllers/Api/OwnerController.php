@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Courier;
 use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\Order;
@@ -67,6 +68,7 @@ class OwnerController extends Controller
             'payment_breakdown' => $paymentBreakdown,
             'top_services' => $topServices,
             'branches' => Branch::all(),
+            'couriers' => Courier::withCount(['orders' => fn ($q) => $q->where('status', '!=', 'selesai')])->get(),
         ]);
     }
 

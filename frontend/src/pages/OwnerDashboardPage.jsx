@@ -42,6 +42,7 @@ export default function OwnerDashboardPage() {
   const paymentBreakdown = analytics?.payment_breakdown || []
   const topServices = analytics?.top_services || []
   const branches = analytics?.branches || []
+  const couriers = analytics?.couriers || []
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col lg:flex-row">
@@ -168,8 +169,8 @@ export default function OwnerDashboardPage() {
           </div>
         </div>
 
-        {/* Bottom Section: Top Services & Inventory Alerts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bottom Section: Top Services, Couriers & Inventory Alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
             <h2 className="text-base font-bold text-slate-900">Layanan Terlaris</h2>
             <div className="space-y-3">
@@ -177,6 +178,21 @@ export default function OwnerDashboardPage() {
                 <div key={svc.name} className="flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-700">{svc.name}</span>
                   <span className="font-bold text-[#0284C7]">{svc.total_orders}x dipesan</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+            <h2 className="text-base font-bold text-slate-900">Daftar Kurir Aktif</h2>
+            <div className="divide-y divide-slate-100">
+              {couriers.map((k) => (
+                <div key={k.id} className="py-2.5 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{k.name}</p>
+                    <p className="text-xs text-slate-500">{k.phone}</p>
+                  </div>
+                  <StatusPill tone="info">{k.orders_count || 0} tugas aktif</StatusPill>
                 </div>
               ))}
             </div>
