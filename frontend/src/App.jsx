@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage'
 import PosPage from './pages/PosPage'
 import AdminOrdersPage from './pages/AdminOrdersPage'
 import OwnerDashboardPage from './pages/OwnerDashboardPage'
+import ManageUsersPage from './pages/ManageUsersPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/admin/pos" element={<PosPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
           <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
+          <Route path="/owner/users" element={<ManageUsersPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

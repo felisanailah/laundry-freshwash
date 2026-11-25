@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Calculator, ClipboardList, BarChart3, ArrowLeft, Droplets } from 'lucide-react'
+import { Calculator, ClipboardList, BarChart3, Users, ArrowLeft, Droplets } from 'lucide-react'
 
 const LINKS = [
   { to: '/admin/pos', label: 'Kasir (POS)', Icon: Calculator },
   { to: '/admin/orders', label: 'Status & Kurir', Icon: ClipboardList },
   { to: '/owner/dashboard', label: 'Owner Analytics', Icon: BarChart3 },
+  { to: '/owner/users', label: 'Kelola Karyawan', Icon: Users },
 ]
 
 export default function AdminSidebar() {

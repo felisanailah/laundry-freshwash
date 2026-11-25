@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AdminOrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OwnerController;
 use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public & Customer routes
@@ -29,9 +30,13 @@ Route::prefix('admin')->group(function () {
     Route::patch('/orders/{order}/courier', [AdminOrderController::class, 'assignCourier']);
 });
 
-// Owner Analytics & Inventory routes
+// Owner Analytics, Inventory & User Management routes
 Route::prefix('owner')->group(function () {
     Route::get('/analytics', [OwnerController::class, 'analytics']);
     Route::get('/inventory', [OwnerController::class, 'inventory']);
     Route::patch('/inventory/{inventoryItem}', [OwnerController::class, 'updateInventory']);
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
 });
